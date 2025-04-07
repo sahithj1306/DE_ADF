@@ -1,0 +1,13 @@
+{
+	"name": "api",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "HttpServer",
+		"typeProperties": {
+			"url": "https://api.twelvedata.com/time_series?symbol=INFY:NSE&interval=5min&outputsize=1&apikey=93eb76a2e6f04597833e93ecfdc4a05b",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}

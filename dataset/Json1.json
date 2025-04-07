@@ -1,0 +1,77 @@
+{
+	"name": "Json1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "api",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"meta": {
+					"type": "object",
+					"properties": {
+						"symbol": {
+							"type": "string"
+						},
+						"interval": {
+							"type": "string"
+						},
+						"currency": {
+							"type": "string"
+						},
+						"exchange_timezone": {
+							"type": "string"
+						},
+						"exchange": {
+							"type": "string"
+						},
+						"mic_code": {
+							"type": "string"
+						},
+						"type": {
+							"type": "string"
+						}
+					}
+				},
+				"values": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"datetime": {
+								"type": "string"
+							},
+							"open": {
+								"type": "string"
+							},
+							"high": {
+								"type": "string"
+							},
+							"low": {
+								"type": "string"
+							},
+							"close": {
+								"type": "string"
+							},
+							"volume": {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"status": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

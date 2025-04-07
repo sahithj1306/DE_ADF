@@ -1,0 +1,9 @@
+{
+	"name": "nsefactroy",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "7e946338-f24f-4733-a668-425c4c0fdcbe",
+		"tenantId": "89435fcc-b584-41a8-9706-1d82cab48549"
+	}
+}
