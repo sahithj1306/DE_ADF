@@ -1,0 +1,453 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name"
+		},
+		"AzureDataLakeStorage1": {
+			"type": "string"
+		},
+		"api": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data from url",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "[['datetime']"
+										},
+										"sink": {
+											"name": "datetime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['open']"
+										},
+										"sink": {
+											"name": "open"
+										}
+									},
+									{
+										"source": {
+											"path": "[['high']"
+										},
+										"sink": {
+											"name": "high"
+										}
+									},
+									{
+										"source": {
+											"path": "[['low']"
+										},
+										"sink": {
+											"name": "low"
+										}
+									},
+									{
+										"source": {
+											"path": "[['close']"
+										},
+										"sink": {
+											"name": "close"
+										}
+									},
+									{
+										"source": {
+											"path": "[['volume']"
+										},
+										"sink": {
+											"name": "volume"
+										}
+									}
+								],
+								"collectionReference": "$['values']"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Json1",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sinkparametrdate",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "Copy data from url",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DelimitedText1",
+								"type": "DatasetReference"
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"modifiedDatetimeEnd": {
+									"value": "@addminutes(utcNow(),-5)",
+									"type": "Expression"
+								},
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata1').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Delete1",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "Binary1",
+											"type": "DatasetReference",
+											"parameters": {
+												"file_name": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										},
+										"logStorageSettings": {
+											"linkedServiceName": {
+												"referenceName": "[parameters('AzureDataLakeStorage1')]",
+												"type": "LinkedServiceReference"
+											}
+										},
+										"enableLogging": true,
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"annotations": [],
+				"lastPublishTime": "2025-04-07T07:22:48Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Json1')]",
+				"[concat(variables('factoryId'), '/datasets/sinkparametrdate')]",
+				"[concat(variables('factoryId'), '/datasets/DelimitedText1')]",
+				"[concat(variables('factoryId'), '/datasets/Binary1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Json1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('api')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"meta": {
+							"type": "object",
+							"properties": {
+								"symbol": {
+									"type": "string"
+								},
+								"interval": {
+									"type": "string"
+								},
+								"currency": {
+									"type": "string"
+								},
+								"exchange_timezone": {
+									"type": "string"
+								},
+								"exchange": {
+									"type": "string"
+								},
+								"mic_code": {
+									"type": "string"
+								},
+								"type": {
+									"type": "string"
+								}
+							}
+						},
+						"values": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"datetime": {
+										"type": "string"
+									},
+									"open": {
+										"type": "string"
+									},
+									"high": {
+										"type": "string"
+									},
+									"low": {
+										"type": "string"
+									},
+									"close": {
+										"type": "string"
+									},
+									"volume": {
+										"type": "string"
+									}
+								}
+							}
+						},
+						"status": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sinkparametrdate')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureDataLakeStorage1')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "nifty_@{formatDateTime(utcNow(),'yyyyMMddHHmmss')}.csv",
+							"type": "Expression"
+						},
+						"fileSystem": "rawdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "datetime",
+						"type": "String"
+					},
+					{
+						"name": "open",
+						"type": "String"
+					},
+					{
+						"name": "high",
+						"type": "String"
+					},
+					{
+						"name": "low",
+						"type": "String"
+					},
+					{
+						"name": "close",
+						"type": "String"
+					},
+					{
+						"name": "volume",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DelimitedText1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureDataLakeStorage1')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "rawdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "datetime",
+						"type": "String"
+					},
+					{
+						"name": "open",
+						"type": "String"
+					},
+					{
+						"name": "high",
+						"type": "String"
+					},
+					{
+						"name": "low",
+						"type": "String"
+					},
+					{
+						"name": "close",
+						"type": "String"
+					},
+					{
+						"name": "volume",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Binary1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureDataLakeStorage1')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"file_name": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().file_name",
+							"type": "Expression"
+						},
+						"fileSystem": "rawdata"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
