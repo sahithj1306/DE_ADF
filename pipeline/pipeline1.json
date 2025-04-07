@@ -136,7 +136,7 @@
 						"type": "AzureBlobFSReadSettings",
 						"recursive": true,
 						"modifiedDatetimeEnd": {
-							"value": "@addminutes(utcNow(),-5)",
+							"value": "@addminutes(utcNow(),-13)",
 							"type": "Expression"
 						},
 						"enablePartitionDiscovery": false
